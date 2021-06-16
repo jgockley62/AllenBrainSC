@@ -29,5 +29,5 @@ RUN apt-get update -y\
 && R -e "BiocManager::install('sva')"\
 && R -e "install.packages('utils')"
 
-run mkdir /home/nperumal/AllenBrainSC \ 
+RUN mkdir -p /home/nperumal/AllenBrainSC \ 
 && git clone https://github.com/NitheshPerumal/AllenBrainSC.git /home/nperumal/AllenBrainSC/
