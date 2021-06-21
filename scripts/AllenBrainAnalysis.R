@@ -16,6 +16,17 @@ gene_exp <- read.csv("rstudio/matrix.csv", header = TRUE, sep = ',')
 
 # Analysis -----------------------------------------------------------------
 
+# Counts Per Million (CPM) Normalization by sample 
+CPM <- function(x){
+  den <- sum(x)
+  x/den*(10^6)
+}
+cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
+cpm_exp <- cbind(gene_exp[,1], cpm_exp)
+colnames(cpm_exp)[1] = "sample_name"
+
+remove(gene_exp) # Removing un normalized expression matrix to save memory
+
 # Counts of Broad Cell Types based on Brain Region
 regional_class <- as.data.frame.matrix(xtabs(formula = ~region_label+class_label, meta))
 colnames(regional_class)[1] <- "Unlabelled"
@@ -41,14 +52,14 @@ non_neuronal <- subset(meta, class_label == "Non-neuronal") # Non-neuronal sampl
 # Double checking that all the data is accounted for
 nrow(meta) == nrow(unlabelled) + nrow(inhibitory) + nrow(excitatory) + nrow(non_neuronal)
 
-unlab_data <- semi_join(gene_exp, unlabelled, by = 'sample_name') # Unlabelled Gene exp
-inhib_data <- semi_join(gene_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
-excit_data <- semi_join(gene_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
-non_data <- semi_join(gene_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
+unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Gene exp
+inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
+excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
+non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
 
-# Push to synapse -----------------------------------------------------------
+# Pushing data to synapse -----------------------------------------------------------
 
-synLogin()
+synLogin(authToken = "")
 
 # Setting Synapse ID's
 parentID = 'syn25881694'
