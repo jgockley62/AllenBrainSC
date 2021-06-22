@@ -1,10 +1,13 @@
 # Allen Brain Data
 # https://portal.brain-map.org/atlases-and-data/rnaseq/human-multiple-cortical-areas-smart-seq
 
+
 # Libraries ----------------------------------------------------------------
 
 library(tidyverse)
 library(synapser)
+library(mclust)
+library(edgeR)
 
 # Load Data -----------------------------------------------------------------
 
@@ -14,6 +17,7 @@ meta <- read.csv("rstudio/metadata.csv",header = TRUE, sep = ',')
 # Gene expression Matrix
 gene_exp <- read.csv("rstudio/matrix.csv", header = TRUE, sep = ',')
 
+
 # Analysis -----------------------------------------------------------------
 
 # Counts Per Million (CPM) Normalization by sample 
@@ -22,11 +26,24 @@ CPM <- function(x){
   x/den*(10^6)
 }
 cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
+
+
+#is.na(gene_exp) || gene_exp < 0
+#cpm_exp <- edgeR::cpm(gene_exp[,-1], normalized.lib.sizes = TRUE, lib.size = NULL, log = TRUE, prior.count = 0.01)
+#cpm_exp <- cbind(gene_exp[,-1],cpm_exp)
+
+#remove(gene_exp) # Removing un normalized expression matrix to save memory
+
+# Reordering by Variance
+cpm_exp <- cpm_exp[, order(apply(cpm_exp,2,FUN = var), decreasing = TRUE)]
 cpm_exp <- cbind(gene_exp[,1], cpm_exp)
 colnames(cpm_exp)[1] = "sample_name"
 
-remove(gene_exp) # Removing un normalized expression matrix to save memory
+# Gaussian Mixture Model
+mcl.model <- Mclust(cpm_exp[,2:20],3)
+plot(mcl.model, what = "classification", main = "Mclust Classification")
 
+# Some Exploratory Analysis used to determine how to distinguish cell types
 # Counts of Broad Cell Types based on Brain Region
 regional_class <- as.data.frame.matrix(xtabs(formula = ~region_label+class_label, meta))
 colnames(regional_class)[1] <- "Unlabelled"
@@ -56,6 +73,7 @@ unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Ge
 inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
 excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
 non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
+
 
 # Pushing data to synapse -----------------------------------------------------------
 
