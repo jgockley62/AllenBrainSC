@@ -7,6 +7,7 @@
 library(tidyverse)
 library(synapser)
 library(mclust)
+library(BiocManager)
 library(edgeR)
 
 # Load Data -----------------------------------------------------------------
@@ -27,21 +28,22 @@ CPM <- function(x){
 }
 cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
 
-
+#Library sizes should be finite and non-negative
 #is.na(gene_exp) || gene_exp < 0
-#cpm_exp <- edgeR::cpm(gene_exp[,-1], normalized.lib.sizes = TRUE, lib.size = NULL, log = TRUE, prior.count = 0.01)
+#cpm_exp <- cpm(gene_exp[,-1], log = FALSE)
 #cpm_exp <- cbind(gene_exp[,-1],cpm_exp)
-
-#remove(gene_exp) # Removing un normalized expression matrix to save memory
 
 # Reordering by Variance
 cpm_exp <- cpm_exp[, order(apply(cpm_exp,2,FUN = var), decreasing = TRUE)]
 cpm_exp <- cbind(gene_exp[,1], cpm_exp)
 colnames(cpm_exp)[1] = "sample_name"
 
+remove(gene_exp) # Removing un normalized expression matrix to save memory
+
 # Gaussian Mixture Model
-mcl.model <- Mclust(cpm_exp[,2:20],3)
-plot(mcl.model, what = "classification", main = "Mclust Classification")
+#mcl.model <- Mclust(cpm_exp[,2:20],3)
+#plot(mcl.model, what = "classification", main = "Mclust Classification")
+
 
 # Some Exploratory Analysis used to determine how to distinguish cell types
 # Counts of Broad Cell Types based on Brain Region
@@ -73,6 +75,18 @@ unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Ge
 inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
 excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
 non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
+
+
+rm_missing <- function(x){
+  count <- apply(x,2, function(x) sum(x <= 1))
+  pruned <- x[ , -which(names(x) %in% names(which(count >= 0.5*nrow(x))))]
+  return(pruned)
+}
+
+excit_data_rm <- rm_missing(excit_data)
+inhib_data_rm <- rm_missing(inhib_data)
+unlab_data_rm <- rm_missing(unlab_data)
+non_data_rm <- rm_missing(non_data)
 
 
 # Pushing data to synapse -----------------------------------------------------------
