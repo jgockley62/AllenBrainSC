@@ -76,6 +76,11 @@ inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Ge
 excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
 non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
 
+# Remvoing un-needed data to free up memory
+remove(unlabelled)
+remove(inhibitory)
+remove(excitatory)
+remove(non_neuronal)
 
 rm_missing <- function(x){
   count <- apply(x,2, function(x) sum(x <= 1))
@@ -83,10 +88,38 @@ rm_missing <- function(x){
   return(pruned)
 }
 
-excit_data_rm <- rm_missing(excit_data)
+# Excit data kills the AWS instance
+#excit_data_rm <- rm_missing(excit_data)
 inhib_data_rm <- rm_missing(inhib_data)
 unlab_data_rm <- rm_missing(unlab_data)
 non_data_rm <- rm_missing(non_data)
+
+overlap <- function(x,y){
+  cols <- names(x) %in% names(y)
+  return(names(x[,which(cols)])[-1])
+}
+
+# Overlap of features
+unlab_inhib_overlap <- overlap(unlab_data_rm, inhib_data_rm)
+unlab_non_overlap <- overlap(unlab_data_rm, non_data_rm)
+inhib_non_overlap <- overlap(inhib_data_rm, non_data_rm)
+
+
+# Trying to get UpSet plots to work
+unlab_ups <- as.data.frame(+ sapply(unlab_data_rm[-1], as.logical))
+inhib_ups <- as.data.frame(+ sapply(inhib_data_rm[-1], as.logical))
+#ups <- merge(inhib_ups, unlab_ups, all.x = TRUE, all.y = TRUE)
+
+test <- t(unlab_ups[1,])
+colnames(test)[1] <- 'Unlabelled'
+
+testin <- t(inhib_ups[1,])
+colnames(testin)[1] <- 'Inhibitory'
+
+ups_dat <- merge(test, testin, all.x = TRUE, all.y = TRUE)
+
+library(UpSetR)
+upset(ups_dat, nsets = 2)
 
 
 # Pushing data to synapse -----------------------------------------------------------
