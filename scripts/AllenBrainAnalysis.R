@@ -24,7 +24,7 @@ gene_exp <- read.csv("rstudio/matrix.csv", header = TRUE, sep = ',')
 # Counts Per Million (CPM) Normalization by sample 
 CPM <- function(x){
   den <- sum(x)
-  x/den*(10^6)
+  log2(x/den*(10^6))
 }
 cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
 
