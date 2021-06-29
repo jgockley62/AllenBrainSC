@@ -65,7 +65,7 @@ cell_type_sub <- as.data.frame.matrix(xtabs(formula = ~cell_type_accession_label
 # Broad Cell Type Subsets Metadata
 unlabelled <- subset(meta, class_label == "") # Unlabelled samples
 inhibitory <- subset(meta, class_label == "GABAergic") # Inhibitory samples
-excitatory <- subset(meta, class_label == "Glutamatergic") # Excitatory samples
+#excitatory <- subset(meta, class_label == "Glutamatergic") # Excitatory samples
 non_neuronal <- subset(meta, class_label == "Non-neuronal") # Non-neuronal samples
 
 # Double checking that all the data is accounted for
@@ -73,13 +73,13 @@ nrow(meta) == nrow(unlabelled) + nrow(inhibitory) + nrow(excitatory) + nrow(non_
 
 unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Gene exp
 inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
-excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
+#excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
 non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
 
 # Remvoing un-needed data to free up memory
 remove(unlabelled)
 remove(inhibitory)
-remove(excitatory)
+#remove(excitatory)
 remove(non_neuronal)
 
 rm_missing <- function(x){
@@ -104,22 +104,46 @@ unlab_inhib_overlap <- overlap(unlab_data_rm, inhib_data_rm)
 unlab_non_overlap <- overlap(unlab_data_rm, non_data_rm)
 inhib_non_overlap <- overlap(inhib_data_rm, non_data_rm)
 
-
+#---------
 # Trying to get UpSet plots to work
-unlab_ups <- as.data.frame(+ sapply(unlab_data_rm[-1], as.logical))
-inhib_ups <- as.data.frame(+ sapply(inhib_data_rm[-1], as.logical))
+#unlab_ups <- as.data.frame(+ sapply(unlab_data_rm[-1], as.logical))
+#inhib_ups <- as.data.frame(+ sapply(inhib_data_rm[-1], as.logical))
 #ups <- merge(inhib_ups, unlab_ups, all.x = TRUE, all.y = TRUE)
 
-test <- t(unlab_ups[1,])
-colnames(test)[1] <- 'Unlabelled'
+#test <- t(unlab_ups[1,])
+#colnames(test)[1] <- 'Unlabelled'
 
-testin <- t(inhib_ups[1,])
-colnames(testin)[1] <- 'Inhibitory'
+#testin <- t(inhib_ups[1,])
+#colnames(testin)[1] <- 'Inhibitory'
 
-ups_dat <- merge(test, testin, all.x = TRUE, all.y = TRUE)
+#ups_dat <- merge(test, testin, all.x = TRUE, all.y = TRUE)
 
-library(UpSetR)
-upset(ups_dat, nsets = 2)
+#library(UpSetR)
+#upset(ups_dat, nsets = 2)
+#---------
+
+# Summary Statistics for each Broad Cell type category
+# Function to replace the -Inf with 0
+inf <- function(x){
+  y <- replace(x, which(x == '-Inf'), as.numeric(0))
+  return(y)
+}
+
+# Function to find mean of every column
+stats <- function(x){
+  y <- apply(x[,-1], 2, FUN = inf)
+  
+  m <- as.data.frame(apply(y, 2, FUN = mean))
+  colnames(m)[1] <- 'mean'
+  
+  med <- as.data.frame(apply(y, 2, FUN = median))
+  colnames(med)[1] <- 'median'
+  
+  out <- cbind(m,med, m-med)
+  return(out)
+}
+
+unlab_summary <- stats(unlab_data_rm)
 
 
 # Pushing data to synapse -----------------------------------------------------------
