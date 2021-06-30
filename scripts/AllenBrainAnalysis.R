@@ -139,11 +139,45 @@ stats <- function(x){
   med <- as.data.frame(apply(y, 2, FUN = median))
   colnames(med)[1] <- 'median'
   
-  out <- cbind(m,med, m-med)
+  std_dev <- as.data.frame(apply(y, 2, FUN = sd))
+  colnames(std_dev)[1] <- 'std_dev'
+  
+  feature_name <- as.data.frame(rownames(m))
+  colnames(feature_name)[1] <- 'features'
+  
+  out <- cbind(feature_name,m,med, m-med, std_dev)
+  colnames(out)[4] <- 'diff'
   return(out)
 }
 
+# excit_summary <- stats(excit_data_rm)
 unlab_summary <- stats(unlab_data_rm)
+inhib_summary <- stats(inhib_data_rm)
+non_summary <- stats(non_data_rm)
+
+# hist(excit_summary$diff)
+hist(unlab_summary$diff) # Skewed left
+hist(inhib_summary$diff) # Skewed left
+hist(non_summary$diff) # Looks much more normal
+
+# Dataframe with medians of all features by Broad Cell type
+features <- as.data.frame(names(cpm_exp))
+features <- as.data.frame(features[-1,])
+colnames(features)[1] <- 'features'
+
+inhib_med <- left_join(features, inhib_summary[,c(1,3)], by = 'features')
+non_med <- left_join(features, non_summary[,c(1,3)], by = 'features')
+unlab_med <- left_join(features, unlab_summary[,c(1,3)], by = 'features')
+
+features_med <- cbind(inhib_med, non_med[,2], unlab_med[,2])
+features_med[is.na(features_med)] <- 0
+colnames(features_med) <- c('features', 'Inhib','Nonneuronal','Unlabelled')
+features_med$sum <- apply(features_med[,-1],1, FUN = sum)
+
+composition <- features_med[,c(-1,-5)]/features_med[,5]
+composition[is.na(composition)] <- 0
+composition <- cbind(features_med[,1], composition)
+colnames(composition)[1] <- 'features'
 
 
 # Pushing data to synapse -----------------------------------------------------------
