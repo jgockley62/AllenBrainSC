@@ -179,6 +179,10 @@ composition[is.na(composition)] <- 0
 composition <- cbind(features_med[,1], composition)
 colnames(composition)[1] <- 'features'
 
+hist(composition$Inhib[composition$Inhib != 0])
+hist(composition$Nonneuronal[composition$Nonneuronal != 0])
+hist(composition$Unlabelled[composition$Unlabelled != 0])
+
 
 # Pushing data to synapse -----------------------------------------------------------
 
