@@ -147,6 +147,7 @@ features <- as.data.frame(names(cpm_exp))
 features <- as.data.frame(features[-1,])
 colnames(features)[1] <- 'features'
 
+# Median of features by Broad Cell Type
 inhib_med <- left_join(features, inhib_summary[,c(1,3)], by = 'features')
 non_med <- left_join(features, non_summary[,c(1,3)], by = 'features')
 unlab_med <- left_join(features, unlab_summary[,c(1,3)], by = 'features')
@@ -156,6 +157,7 @@ features_med[is.na(features_med)] <- 0
 colnames(features_med) <- c('features', 'Inhib','Nonneuronal','Unlabelled')
 features_med$sum <- apply(features_med[,-1],1, FUN = sum)
 
+# Proportion Composition by Median as Cell Type Score
 composition <- features_med[,c(-1,-5)]/features_med[,5]
 composition[is.na(composition)] <- 0
 composition <- cbind(features_med[,1], composition)
@@ -170,7 +172,11 @@ hist(composition$Unlabelled[composition$Unlabelled != 0])
 library(UpSetR)
 ups <- features_med
 ups[ups > 0] <- 1
-upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled')) # Excitatory not included yet
+# Excitatory not included yet
+upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled'), order.by = 'freq',
+      mainbar.y.label = 'Broad Cell Type Intersection', sets.x.label = 'Broad Cell Type') 
+
+# Need to make UpSet Plot by region
 
 
 # Pushing data to synapse -----------------------------------------------------------
@@ -270,6 +276,74 @@ Unlab <- synStore( File(
 )
 #synapser::synSetAnnotations(Unlab, annotations = all.annotations)
 file.remove('Unlabelled_Cells.csv')
+
+
+# Unlabelled Cells Feature Summary 
+write.csv(unlab_summary,
+          file = 'Unlabelled_Summary.csv',
+          quote = FALSE
+)
+
+Unlab_sum <- synStore( File(
+  path = 'Unlabelled_Summary.csv',
+  name = 'Unlabelled Cells Summary Statistics by Feature',
+  parentId = activity$properties$id),
+  activityName = activityName,
+  activityDescription = activityDescription
+)
+#synapser::synSetAnnotations(Unlab, annotations = all.annotations)
+file.remove('Unlabelled_Summary.csv')
+
+
+# Inhibitory Cells Feature Summary 
+write.csv(inhib_summary,
+          file = 'Inhib_Summary.csv',
+          quote = FALSE
+)
+
+Inhib_sum <- synStore( File(
+  path = 'Inhib_Summary.csv',
+  name = 'Inhibitory Cells Summary Statistics by Feature',
+  parentId = activity$properties$id),
+  activityName = activityName,
+  activityDescription = activityDescription
+)
+#synapser::synSetAnnotations(Unlab, annotations = all.annotations)
+file.remove('Inhib_Summary.csv')
+
+
+# Nonneuronal Cells Feature Summary 
+write.csv(non_summary,
+          file = 'Non_Summary.csv',
+          quote = FALSE
+)
+
+Non_sum <- synStore( File(
+  path = 'Non_Summary.csv',
+  name = 'Non Neuronal Cells Summary Statistics by Feature',
+  parentId = activity$properties$id),
+  activityName = activityName,
+  activityDescription = activityDescription
+)
+#synapser::synSetAnnotations(Unlab, annotations = all.annotations)
+file.remove('Non_Summary.csv')
+
+
+# Percent Composition Data frame
+write.csv(composition,
+          file = 'composition.csv',
+          quote = FALSE
+)
+
+comp <- synStore( File(
+  path = 'composition.csv',
+  name = 'Percent composition of feature by Broad Cell Type',
+  parentId = activity$properties$id),
+  activityName = activityName,
+  activityDescription = activityDescription
+)
+#synapser::synSetAnnotations(Unlab, annotations = all.annotations)
+file.remove('composition.csv')
 
 
 
