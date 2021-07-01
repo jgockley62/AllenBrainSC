@@ -94,33 +94,15 @@ inhib_data_rm <- rm_missing(inhib_data)
 unlab_data_rm <- rm_missing(unlab_data)
 non_data_rm <- rm_missing(non_data)
 
-overlap <- function(x,y){
-  cols <- names(x) %in% names(y)
-  return(names(x[,which(cols)])[-1])
-}
+#overlap <- function(x,y){
+#  cols <- names(x) %in% names(y)
+#  return(names(x[,which(cols)])[-1])
+#}
 
 # Overlap of features
-unlab_inhib_overlap <- overlap(unlab_data_rm, inhib_data_rm)
-unlab_non_overlap <- overlap(unlab_data_rm, non_data_rm)
-inhib_non_overlap <- overlap(inhib_data_rm, non_data_rm)
-
-#---------
-# Trying to get UpSet plots to work
-#unlab_ups <- as.data.frame(+ sapply(unlab_data_rm[-1], as.logical))
-#inhib_ups <- as.data.frame(+ sapply(inhib_data_rm[-1], as.logical))
-#ups <- merge(inhib_ups, unlab_ups, all.x = TRUE, all.y = TRUE)
-
-#test <- t(unlab_ups[1,])
-#colnames(test)[1] <- 'Unlabelled'
-
-#testin <- t(inhib_ups[1,])
-#colnames(testin)[1] <- 'Inhibitory'
-
-#ups_dat <- merge(test, testin, all.x = TRUE, all.y = TRUE)
-
-#library(UpSetR)
-#upset(ups_dat, nsets = 2)
-#---------
+#unlab_inhib_overlap <- overlap(unlab_data_rm, inhib_data_rm)
+#unlab_non_overlap <- overlap(unlab_data_rm, non_data_rm)
+#inhib_non_overlap <- overlap(inhib_data_rm, non_data_rm)
 
 # Summary Statistics for each Broad Cell type category
 # Function to replace the -Inf with 0
@@ -182,6 +164,13 @@ colnames(composition)[1] <- 'features'
 hist(composition$Inhib[composition$Inhib != 0])
 hist(composition$Nonneuronal[composition$Nonneuronal != 0])
 hist(composition$Unlabelled[composition$Unlabelled != 0])
+
+
+# UpSet Plot
+library(UpSetR)
+ups <- features_med
+ups[ups > 0] <- 1
+upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled')) # Excitatory not included yet
 
 
 # Pushing data to synapse -----------------------------------------------------------
