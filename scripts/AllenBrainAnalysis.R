@@ -172,11 +172,14 @@ hist(composition$Unlabelled[composition$Unlabelled != 0])
 library(UpSetR)
 ups <- features_med
 ups[ups > 0] <- 1
+
 # Excitatory not included yet
+jpeg(file = '/home/nperumal/AllenBrainSC/plots/UpSet_Broad_Cell_Types.jpeg')
 upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled'), order.by = 'freq',
       mainbar.y.label = 'Broad Cell Type Intersection', sets.x.label = 'Broad Cell Type') 
+dev.off()
 
-# Need to make UpSet Plot by region
+# Need to make UpSet Plot by region------------------------
 
 
 # Pushing data to synapse -----------------------------------------------------------
