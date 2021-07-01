@@ -65,7 +65,7 @@ cell_type_sub <- as.data.frame.matrix(xtabs(formula = ~cell_type_accession_label
 # Broad Cell Type Subsets Metadata
 unlabelled <- subset(meta, class_label == "") # Unlabelled samples
 inhibitory <- subset(meta, class_label == "GABAergic") # Inhibitory samples
-#excitatory <- subset(meta, class_label == "Glutamatergic") # Excitatory samples
+excitatory <- subset(meta, class_label == "Glutamatergic") # Excitatory samples
 non_neuronal <- subset(meta, class_label == "Non-neuronal") # Non-neuronal samples
 
 # Double checking that all the data is accounted for
@@ -73,13 +73,13 @@ nrow(meta) == nrow(unlabelled) + nrow(inhibitory) + nrow(excitatory) + nrow(non_
 
 unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Gene exp
 inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
-#excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
+excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
 non_data <- semi_join(cpm_exp, non_neuronal, by = 'sample_name') # Non-neuronal Gene exp
 
 # Remvoing un-needed data to free up memory
 remove(unlabelled)
 remove(inhibitory)
-#remove(excitatory)
+remove(excitatory)
 remove(non_neuronal)
 
 rm_missing <- function(x){
@@ -89,7 +89,7 @@ rm_missing <- function(x){
 }
 
 # Excit data kills the AWS instance
-#excit_data_rm <- rm_missing(excit_data)
+excit_data_rm <- rm_missing(excit_data)
 inhib_data_rm <- rm_missing(inhib_data)
 unlab_data_rm <- rm_missing(unlab_data)
 non_data_rm <- rm_missing(non_data)
@@ -132,12 +132,12 @@ stats <- function(x){
   return(out)
 }
 
-# excit_summary <- stats(excit_data_rm)
+excit_summary <- stats(excit_data_rm)
 unlab_summary <- stats(unlab_data_rm)
 inhib_summary <- stats(inhib_data_rm)
 non_summary <- stats(non_data_rm)
 
-# hist(excit_summary$diff)
+hist(excit_summary$diff) # Skewed left
 hist(unlab_summary$diff) # Skewed left
 hist(inhib_summary$diff) # Skewed left
 hist(non_summary$diff) # Looks much more normal
@@ -151,14 +151,15 @@ colnames(features)[1] <- 'features'
 inhib_med <- left_join(features, inhib_summary[,c(1,3)], by = 'features')
 non_med <- left_join(features, non_summary[,c(1,3)], by = 'features')
 unlab_med <- left_join(features, unlab_summary[,c(1,3)], by = 'features')
+excit_med <- left_join(features, excit_summary[,c(1,3)], by = 'features')
 
-features_med <- cbind(inhib_med, non_med[,2], unlab_med[,2])
+features_med <- cbind(inhib_med, non_med[,2], unlab_med[,2], excit_med[,2])
 features_med[is.na(features_med)] <- 0
-colnames(features_med) <- c('features', 'Inhib','Nonneuronal','Unlabelled')
+colnames(features_med) <- c('features', 'Inhib','Nonneuronal','Unlabelled','Excitatory')
 features_med$sum <- apply(features_med[,-1],1, FUN = sum)
 
 # Proportion Composition by Median as Cell Type Score
-composition <- features_med[,c(-1,-5)]/features_med[,5]
+composition <- features_med[,c(-1,-6)]/features_med[,6]
 composition[is.na(composition)] <- 0
 composition <- cbind(features_med[,1], composition)
 colnames(composition)[1] <- 'features'
@@ -166,7 +167,7 @@ colnames(composition)[1] <- 'features'
 hist(composition$Inhib[composition$Inhib != 0])
 hist(composition$Nonneuronal[composition$Nonneuronal != 0])
 hist(composition$Unlabelled[composition$Unlabelled != 0])
-
+hist(composition$Excitatory[composition$Excitatory != 0])
 
 # UpSet Plot
 library(UpSetR)
@@ -175,7 +176,7 @@ ups[ups > 0] <- 1
 
 # Excitatory not included yet
 jpeg(file = '/home/nperumal/AllenBrainSC/plots/UpSet_Broad_Cell_Types.jpeg')
-upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled'), order.by = 'freq',
+upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled','Excitatory'), order.by = 'freq',
       mainbar.y.label = 'Broad Cell Type Intersection', sets.x.label = 'Broad Cell Type') 
 dev.off()
 
