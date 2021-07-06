@@ -22,16 +22,14 @@ gene_exp <- read.csv("rstudio/matrix.csv", header = TRUE, sep = ',')
 # Analysis -----------------------------------------------------------------
 
 # Counts Per Million (CPM) Normalization by sample 
+# @parm x column to perform log2 normalization of CPM
+# @return log2(CPM) of variable
 CPM <- function(x){
   den <- sum(x)
   log2(x/den*(10^6))
 }
 cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
 
-#Library sizes should be finite and non-negative
-#is.na(gene_exp) || gene_exp < 0
-#cpm_exp <- cpm(gene_exp[,-1], log = FALSE)
-#cpm_exp <- cbind(gene_exp[,-1],cpm_exp)
 
 # Reordering by Variance
 cpm_exp <- cpm_exp[, order(apply(cpm_exp,2,FUN = var), decreasing = TRUE)]
@@ -39,10 +37,6 @@ cpm_exp <- cbind(gene_exp[,1], cpm_exp)
 colnames(cpm_exp)[1] = "sample_name"
 
 remove(gene_exp) # Removing un normalized expression matrix to save memory
-
-# Gaussian Mixture Model
-#mcl.model <- Mclust(cpm_exp[,2:20],3)
-#plot(mcl.model, what = "classification", main = "Mclust Classification")
 
 
 # Some Exploratory Analysis used to determine how to distinguish cell types
@@ -71,6 +65,7 @@ non_neuronal <- subset(meta, class_label == "Non-neuronal") # Non-neuronal sampl
 # Double checking that all the data is accounted for
 nrow(meta) == nrow(unlabelled) + nrow(inhibitory) + nrow(excitatory) + nrow(non_neuronal)
 
+# Subsetting the gene expression matrix by Broad Cell Type
 unlab_data <- semi_join(cpm_exp, unlabelled, by = 'sample_name') # Unlabelled Gene exp
 inhib_data <- semi_join(cpm_exp, inhibitory, by = 'sample_name') # Inhibitory Gene exp
 excit_data <- semi_join(cpm_exp, excitatory, by = 'sample_name') # Excitatory Gene exp
@@ -82,36 +77,33 @@ remove(inhibitory)
 remove(excitatory)
 remove(non_neuronal)
 
+# Removing missing features if 50% or more instances are <= 1 CPM
+# @param x datframe of gene expression matrix
+# @return pruned dataframe of gene expression matrix with missing features removed
 rm_missing <- function(x){
   count <- apply(x,2, function(x) sum(x <= 1))
   pruned <- x[ , -which(names(x) %in% names(which(count >= 0.5*nrow(x))))]
   return(pruned)
 }
 
-# Excit data kills the AWS instance
+
 excit_data_rm <- rm_missing(excit_data)
 inhib_data_rm <- rm_missing(inhib_data)
 unlab_data_rm <- rm_missing(unlab_data)
 non_data_rm <- rm_missing(non_data)
 
-#overlap <- function(x,y){
-#  cols <- names(x) %in% names(y)
-#  return(names(x[,which(cols)])[-1])
-#}
-
-# Overlap of features
-#unlab_inhib_overlap <- overlap(unlab_data_rm, inhib_data_rm)
-#unlab_non_overlap <- overlap(unlab_data_rm, non_data_rm)
-#inhib_non_overlap <- overlap(inhib_data_rm, non_data_rm)
-
 # Summary Statistics for each Broad Cell type category
 # Function to replace the -Inf with 0
+# @param x gene expression dataframe with -Inf values to remove
+# @return y dataframe with -Inf replaced with 0
 inf <- function(x){
   y <- replace(x, which(x == '-Inf'), as.numeric(0))
   return(y)
 }
 
 # Function to find mean of every column
+# @param x dataframe of gene matrix to generate summary statistics for
+# @return out dataframe of summary statistics
 stats <- function(x){
   y <- apply(x[,-1], 2, FUN = inf)
   
@@ -155,7 +147,7 @@ excit_med <- left_join(features, excit_summary[,c(1,3)], by = 'features')
 
 features_med <- cbind(inhib_med, non_med[,2], unlab_med[,2], excit_med[,2])
 features_med[is.na(features_med)] <- 0
-colnames(features_med) <- c('features', 'Inhib','Nonneuronal','Unlabelled','Excitatory')
+colnames(features_med) <- c('features', 'Inhibitory','Nonneuronal','Unlabelled','Excitatory')
 features_med$sum <- apply(features_med[,-1],1, FUN = sum)
 
 # Proportion Composition by Median as Cell Type Score
@@ -174,14 +166,13 @@ library(UpSetR)
 ups <- features_med
 ups[ups > 0] <- 1
 
-# Excitatory not included yet
+# Upset plot saved as jpeg
 jpeg(file = '/home/nperumal/AllenBrainSC/plots/UpSet_Broad_Cell_Types.jpeg')
-upset(ups, sets = c('Inhib','Nonneuronal','Unlabelled','Excitatory'), order.by = 'freq',
+upset(ups, sets = c('Inhibitory','Nonneuronal','Unlabelled','Excitatory'), order.by = 'freq',
       mainbar.y.label = 'Broad Cell Type Intersection', sets.x.label = 'Broad Cell Type') 
 dev.off()
 
 # Need to make UpSet Plot by region------------------------
-
 
 # Pushing data to synapse -----------------------------------------------------------
 
