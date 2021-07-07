@@ -9,6 +9,9 @@ library(synapser)
 library(mclust)
 library(BiocManager)
 library(edgeR)
+library(data.table)
+library(parallel)
+library(UpSetR)
 
 # Load Data -----------------------------------------------------------------
 
@@ -16,23 +19,15 @@ library(edgeR)
 meta <- read.csv("rstudio/metadata.csv",header = TRUE, sep = ',')
 
 # Gene expression Matrix
-gene_exp <- read.csv("rstudio/matrix.csv", header = TRUE, sep = ',')
-
+gene_exp <- fread("rstudio/matrix.csv", sep = ',')
 
 # Analysis -----------------------------------------------------------------
 
+# Parallel Processing Setup
+ncore <- as.numeric(detectCores())
+
 # Counts Per Million (CPM) Normalization by sample 
-# @parm x column to perform log2 normalization of CPM
-# @return log2(CPM) of variable
-CPM <- function(x){
-  den <- sum(x)
-  log2(x/den*(10^6))
-}
-cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, CPM)))
-
-
-# Reordering by Variance
-cpm_exp <- cpm_exp[, order(apply(cpm_exp,2,FUN = var), decreasing = TRUE)]
+cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, function(x) (x/sum(x))*1000000)))
 cpm_exp <- cbind(gene_exp[,1], cpm_exp)
 colnames(cpm_exp)[1] = "sample_name"
 
@@ -77,11 +72,13 @@ remove(inhibitory)
 remove(excitatory)
 remove(non_neuronal)
 
+
 # Removing missing features if 50% or more instances are <= 1 CPM
 # @param x datframe of gene expression matrix
 # @return pruned dataframe of gene expression matrix with missing features removed
 rm_missing <- function(x){
-  count <- apply(x,2, function(x) sum(x <= 1))
+  #count <- apply(x,2, function(x) sum(x <= 1))
+  count <- mclapply(x,function(x) sum(x <= 1))
   pruned <- x[ , -which(names(x) %in% names(which(count >= 0.5*nrow(x))))]
   return(pruned)
 }
