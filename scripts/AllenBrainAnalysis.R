@@ -55,9 +55,9 @@ CPM <- function(x){
 cpm_exp <- as.data.frame(parallel::parApply(cl, gene_exp, 2, CPM))
 
 # Counts Per Million (CPM) Normalization by sample 
-#cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, function(x) (x/sum(x))*1000000)))
-#cpm_exp <- cbind(gene_exp[,1], cpm_exp)
-#colnames(cpm_exp)[1] = "sample_name"
+#_# cpm_exp <- as.data.frame(t(apply(gene_exp[,-1], 1, function(x) (x/sum(x))*1000000)))
+#_# cpm_exp <- cbind(gene_exp[,1], cpm_exp)
+#_# colnames(cpm_exp)[1] = "sample_name"
 
 remove(gene_exp) # Removing un normalized expression matrix to save memory
 
