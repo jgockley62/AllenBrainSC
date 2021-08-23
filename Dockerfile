@@ -2,7 +2,7 @@ FROM rocker/tidyverse:4.0.0
 
 RUN apt-get update -y\
 && apt-get install -y dpkg-dev zlib1g-dev libssl-dev libffi-dev zlib1g-dev libbz2-dev liblzma-dev build-essential libglpk40\
-&& apt-get install -y curl libcurl4-openssl-dev\
+&& apt-get install -y curl libcurl4-openssl-dev openssh-client nano less\
 && apt-get install -y git\
 && R -e "install.packages('BiocManager')"\
 && R -e "BiocManager::install('biomaRt')"\
@@ -29,5 +29,5 @@ RUN apt-get update -y\
 && R -e "BiocManager::install('sva')"\
 && R -e "install.packages('utils')"
 
-RUN mkdir -p /home/nperumal/AllenBrainSC \ 
-&& git clone https://github.com/NitheshPerumal/AllenBrainSC.git /home/nperumal/AllenBrainSC/
+RUN mkdir -p /home/jgockley/AllenBrainSC  
+# && git clone git@github.com:jgockley62/AllenBrainSC.git /home/jgockley/AllenBrainSC/
