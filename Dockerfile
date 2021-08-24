@@ -30,4 +30,4 @@ RUN apt-get update -y\
 && R -e "install.packages('utils')"
 
 RUN mkdir -p /home/jgockley/AllenBrainSC  
-# && git clone git@github.com:jgockley62/AllenBrainSC.git /home/jgockley/AllenBrainSC/
+#&& git clone git@github.com:jgockley62/AllenBrainSC.git /home/ec2-user/AllenBrainSC/
