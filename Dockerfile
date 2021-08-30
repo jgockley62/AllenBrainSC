@@ -1,13 +1,15 @@
 FROM rocker/tidyverse:4.0.0
 
 RUN apt-get update -y\
-&& apt-get install -y dpkg-dev zlib1g-dev libssl-dev libffi-dev zlib1g-dev libbz2-dev liblzma-dev build-essential libglpk40\
+&& apt-get install -y dpkg-dev zlib1g-dev libssl-dev libffi-dev zlib1g-dev libbz2-dev liblzma-dev build-essential libglpk40 libxt-dev\
 && apt-get install -y curl libcurl4-openssl-dev openssh-client nano less\
 && apt-get install -y git\
 && R -e "install.packages('BiocManager')"\
+&& R -e "install.packages('random')"\
 && R -e "BiocManager::install('biomaRt')"\
 && R -e "BiocManager::install('ComplexHeatmap')"\
 && R -e "install.packages('data.table')"\
+&& R -e "install.packages('UpSetR')"\
 && R -e "install.packages('doParallel')"\
 && R -e "BiocManager::install('edgeR')"\
 && R -e "install.packages('foreach')"\
