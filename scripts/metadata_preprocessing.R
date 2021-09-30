@@ -1,10 +1,14 @@
+#Seq Vars: ?
 library(dplyr)
 
 synapser::synLogin()
+synids_used <- 'syn26178508'
 seqs <- read.table(synapser::synGet('syn26178508')$path, header = T, sep='\t')
   
 #Meta Vars: csv
 meta <-  as.data.frame(data.table::fread(synapser::synGet('syn26161132')$path, sep=','))
+synids_used <- c(synids_used,'syn26161132')
+
 r_ind <- apply(meta, 1, function(x) all(is.na(x) | x == ''))
 c_ind <- apply(meta, 2, function(x) all(is.na(x) | x == ''))
 meta <- meta[!r_ind, !c_ind]
