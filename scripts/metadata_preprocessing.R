@@ -45,7 +45,7 @@ internal_parentid <- 'syn25784097'
 folder_loc <- 'syn25792226'
 
 #Set Activity
-activity <- synapser::synGet('syn26161132')
+activity <- synapser::synGet('syn26161027')
 
 ##Set Annotations:
 all.annotations = list(
