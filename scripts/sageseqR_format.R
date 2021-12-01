@@ -218,34 +218,34 @@ prov <- githubr::getPermlink(
 )
 
 #Biomart Object
-CountsTable <- synapser::synStore( synapser::File(
+bm <- synapser::synStore( synapser::File(
     path = 'test_biomart_object.tsv',
     name = 'Input Biomart Object',
     parentId = parentID),
   used = syns_used,
-  executed = scripts,
+  executed = prov,
   activityName = 'Input Biomart Object',
   activityDescription = 'Object containing biomart-object information'
 )
 
 #Covariates Object
-CountsTable <- synapser::synStore( synapser::File(
+meta <- synapser::synStore( synapser::File(
   path = 'test_sageseqr_meta.csv',
   name = 'Input Metadata Object',
   parentId = parentID),
   used = syns_used,
-  executed = scripts,
+  executed = prov,
   activityName = 'Input Metadata Object',
   activityDescription = 'Object containing Metadata information'
 )
 
 #Expression Object
-CountsTable <- synapser::synStore( synapser::File(
+counts <- synapser::synStore( synapser::File(
   path = 'test_sageseqr_exp.tsv',
   name = 'Input Expression Object',
   parentId = parentID),
   used = syns_used,
-  executed = scripts,
+  executed = prov,
   activityName = 'Input Expression Object',
   activityDescription = 'Object containing Expression information'
 )
