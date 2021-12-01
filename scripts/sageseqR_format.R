@@ -200,6 +200,8 @@ write.csv(meta, file = 'test_sageseqr_meta.csv', row.names = F, quote = F)
 
 gene_exp$gene_symbol <- row.names(gene_exp)
 gene_exp <- gene_exp[,c('gene_symbol', meta$sample_name)]
+gene_exp$gene_symbol <- gsub("[.]", '_', gene_exp$gene_symbol)
+
 write.table(gene_exp, file = 'test_sageseqr_exp.tsv', row.names = F,
             col.names = T, sep='\t', quote = F)
 
